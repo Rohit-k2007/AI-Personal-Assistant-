@@ -7,6 +7,13 @@ import sys
 from dotenv import load_dotenv
 import uvicorn
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 load_dotenv()
 
 def start_ngrok(port: int = 8000) -> str:
