@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal AI Call Assistant — Smart Hindi Call Screening</title>
+  <meta name="description"
+    content="AI-powered call-screening application that screens callers in Hindi, asks for purpose and urgency, provides summaries and suggested actions.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📞</text></svg>">
+</head>
+
+<body>
+
+  <!-- Top Demo & Status Banner -->
+  <aside class="top-notice-banner" aria-label="Demo status banner">
+    <div class="banner-left">
+      <span class="pulse-dot"></span>
+      <strong>DEMO MODE ACTIVE</strong>
+      <span>• 100% Free to Run • Zero Paid APIs • No Carrier Charges</span>
+    </div>
+    <div class="banner-right">
+      <span>Screening for: <strong>+91 8094725777 (Rohit khandelwal)</strong></span>
+    </div>
+  </aside>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="logo-area">
+      <div class="logo-icon-wrap" aria-hidden="true">🤖</div>
+      <div>
+        <h1 class="brand-title">Personal AI Call Assistant</h1>
+        <div class="brand-subtitle">
+          <span>AI-Powered Hindi Call Screening</span>
+          <span class="badge-tag">🇮🇳 English</span>
+          <span class="badge-tag badge-demo">Local NLP Safe</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="btnOpenSetupGuide" class="btn btn-secondary btn-sm"
+        title="Learn how to connect a real Indian mobile number">
+        <span>📖 Setup Guide</span>
+      </button>
+      <button id="btnOpenSettings" class="btn btn-secondary btn-sm" title="Configure AI Greetings and Sensitivity">
+        <span>⚙️ Settings</span>
+      </button>
+      <button id="btnStartSimulation" class="btn btn-simulate" title="Simulate a real incoming call right now">
+        <span>📞 Simulate Incoming Call</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+
+    <!-- Metrics Grid -->
+    <section class="metrics-grid" aria-label="Dashboard Metrics">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Total Calls Screened</span>
+          <span class="metric-icon">📊</span>
+        </div>
+        <div class="metric-value" id="metricTotal">0</div>
+        <div class="metric-sub">Processed by AI Assistant</div>
+      </div>
+
+      <div class="metric-card urgent">
+        <div class="metric-header">
+          <span>Urgent / Flagged</span>
+          <span class="metric-icon">🚨</span>
+        </div>
+        <div class="metric-value" id="metricUrgent">0</div>
+        <div class="metric-sub">Immediate callback required</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Completed Screenings</span>
+          <span class="metric-icon">✅</span>
+        </div>
+        <div class="metric-value" id="metricCompleted">0</div>
+        <div class="metric-sub">Full transcript recorded</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Missed / Silent</span>
+          <span class="metric-icon">📵</span>
+        </div>
+        <div class="metric-value" id="metricMissed">0</div>
+        <div class="metric-sub">No voice or dropped</div>
+      </div>
+
+      <div class="metric-card spam">
+        <div class="metric-header">
+          <span>Suspected Spam</span>
+          <span class="metric-icon">🛡️</span>
+        </div>
+        <div class="metric-value" id="metricFlagged">0</div>
+        <div class="metric-sub">Loans, marketing & bots</div>
+      </div>
+    </section>
+
+    <!-- Controls Panel & Filter Pills -->
+    <section class="controls-panel" aria-label="Filters and Search">
+      <div class="filter-pills" id="categoryFilterContainer">
+        <button class="pill active" data-cat="all">All Calls</button>
+        <button class="pill" data-cat="Important">Important</button>
+        <button class="pill" data-cat="Personal">Personal</button>
+        <button class="pill" data-cat="Work">Work</button>
+        <button class="pill" data-cat="Unknown">Unknown</button>
+        <button class="pill" data-cat="Suspected Spam">Suspected Spam</button>
+      </div>
+
+      <div class="search-wrap">
+        <span aria-hidden="true">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search caller, purpose, number...">
+      </div>
+    </section>
+
+    <!-- Call History Section -->
+    <section class="history-section" aria-label="Screened Call History">
+      <div class="section-title-bar">
+        <div class="section-title">Screened Call History</div>
+        <button id="btnRefreshCalls" class="btn btn-secondary btn-sm">
+          <span>🔄 Refresh</span>
+        </button>
+      </div>
+
+      <div class="calls-list" id="callsListContainer">
+        <!-- Calls dynamically injected by JavaScript -->
+        <div style="padding: 40px; text-align: center; color: var(--text-dim);">
+          Loading call records...
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: SIMULATE INCOMING CALL ================= -->
+  <div class="modal-overlay" id="simModalOverlay" role="dialog" aria-modal="true" aria-labelledby="simModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="simModalTitle">📞 Simulated Incoming Call</h3>
+        <button class="modal-close-btn" id="btnCloseSimModal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="sim-phone-container">
+
+          <!-- State 1: Incoming Ringing Screen -->
+          <div class="incoming-screen" id="simIncomingRingView">
+            <div class="ringing-avatar" aria-hidden="true">📱</div>
+            <div class="incoming-title">Incoming Call (Unanswered by Owner)</div>
+            <div class="incoming-number" id="simDisplayCallerNumber">+91 98123 45678</div>
+            <div class="incoming-loc">New Delhi, India • Forwarded to AI Assistant</div>
+
+            <div class="incoming-buttons">
+              <button class="btn btn-danger" id="btnSimDecline">
+                <span>❌ Ignore Call</span>
+              </button>
+              <button class="btn btn-simulate" id="btnSimAnswer">
+                <span>🤖 AI Assistant Screen Call</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- State 2: Active Screening View -->
+          <div class="screening-active-view" id="simActiveScreeningView" style="display: none;">
+
+            <div class="ai-status-bar">
+              <div class="ai-speaker-indicator">
+                <span id="aiAvatarIcon">🎙️</span>
+                <span id="aiSpeechStatus">AI Assistant speaking in Hindi...</span>
+              </div>
+              <div class="audio-waves" id="audioWaves">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+              </div>
+              <label
+                style="font-size: 0.76rem; display: flex; align-items: center; gap: 4px; color: var(--text-muted); cursor: pointer;">
+                <input type="checkbox" id="chkAudioTTS" checked> Voice Audio (TTS)
+              </label>
+            </div>
+
+            <!-- Transcript chat history -->
+            <div class="transcript-box" id="simTranscriptBox" aria-live="polite">
+              <!-- Dynamically populated bubbles -->
+            </div>
+
+            <!-- Test presets -->
+            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">
+              Quick Caller Test Scenarios:
+            </div>
+            <div class="quick-presets-bar">
+              <button class="preset-chip" data-test="aman">👨 Aman (College Project)</button>
+              <button class="preset-chip" data-test="doctor">🏥 Dr. Sharma (Emergency)</button>
+              <button class="preset-chip" data-test="spam">💳 Loan Department (Spam)</button>
+              <button class="preset-chip" data-test="unknown">❓ Refuse Name ("नहीं बताना")</button>
+              <button class="preset-chip" data-test="silent">🤐 Silent / Empty Call</button>
+            </div>
+
+            <!-- Caller text input & mic -->
+            <div class="caller-input-box">
+              <input type="text" id="simCallerInput" placeholder="उत्तर टाइप करें (हिंदी में) या ऊपर से टेस्ट चुनें...">
+              <button class="btn-mic" id="btnSimMic" title="Speak in Hindi using Web Speech API">
+                <span>🎤</span>
+              </button>
+              <button class="btn btn-primary" id="btnSimSend">
+                <span>Send</span>
+              </button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <span style="font-size: 0.74rem; color: var(--text-dim);" id="simStepIndicator">Step 1 of 4: Name
+                Question</span>
+              <button class="btn btn-secondary btn-sm" id="btnSimEndEarly">End Call</button>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: NOTIFICATION PREVIEW ================= -->
+  <div class="modal-overlay" id="notifModalOverlay" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="notifModalTitle">🔔 Screened Call Summary & Notification</h3>
+        <button class="modal-close-btn" id="btnCloseNotifModal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="notification-card">
+          <div class="notification-top">
+            <div class="notification-app-badge">
+              <span>🤖</span>
+              <span>AI CALL ASSISTANT • SCREENING COMPLETE</span>
+            </div>
+            <div id="notifUrgencyBadge" class="badge-urgency not-confirmed">Not confirmed</div>
+          </div>
+
+          <pre class="summary-pre-box" id="notifSummaryText"></pre>
+
+          <div class="notification-actions">
+            <button class="btn btn-primary" id="btnCopySummary">
+              <span>📋 Copy Summary</span>
+            </button>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-simulate btn-sm" id="btnNotifCallBack">
+                <span>📞 Call Back</span>
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnNotifDismiss">
+                <span>Dismiss</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CALL DETAILS DRAWER ================= -->
+  <div class="modal-overlay" id="detailModalOverlay" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="detailModalTitle">📑 Call Details & Transcript</h3>
+        <button class="modal-close-btn" id="btnCloseDetailModal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="call-detail-grid">
+          <div class="detail-block">
+            <div class="detail-lbl">Caller Identity</div>
+            <div class="detail-val" id="detailCallerName">Unknown</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);" id="detailCallerPhone">+91 ...</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-lbl">Category & Urgency</div>
+            <div class="detail-val" id="detailCategory">Personal</div>
+            <div style="margin-top: 4px;" id="detailUrgencyBadge"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div class="detail-lbl">AI Summary</div>
+          <pre class="summary-pre-box" id="detailSummaryText"></pre>
+          <button class="btn btn-secondary btn-sm" id="btnCopyDetailSummary" style="margin-top: 6px;">
+            <span>📋 Copy Summary</span>
+          </button>
+        </div>
+
+        <div>
+          <div class="detail-lbl" style="margin-bottom: 8px;">Full Conversation Transcript</div>
+          <div class="transcript-box" id="detailTranscriptBox" style="height: 200px;">
+            <!-- Rendered transcript bubbles -->
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 8px;" id="detailActionButtons">
+            <button class="btn btn-simulate btn-sm" data-action="callback_requested">📞 Request Callback</button>
+            <button class="btn btn-secondary btn-sm" data-action="accepted">✔️ Accept</button>
+            <button class="btn btn-danger btn-sm" data-action="declined">❌ Decline</button>
+          </div>
+          <button class="btn btn-danger btn-sm" id="btnDeleteCallRecord">🗑️ Delete Call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: SETTINGS & PRIVACY ================= -->
+  <div class="modal-overlay" id="settingsModalOverlay" role="dialog" aria-modal="true"
+    aria-labelledby="settingsModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="settingsModalTitle">⚙️ AI Assistant Settings & Privacy</h3>
+        <button class="modal-close-btn" id="btnCloseSettingsModal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="settings-form-group">
+          <label class="settings-label" for="settingOwnerPhone">Owner Indian Mobile Number</label>
+          <div class="settings-desc">The mobile number where unanswered calls get forwarded to this AI.</div>
+          <input type="text" id="settingOwnerPhone" class="settings-input" value="+91 98765 43210">
+        </div>
+
+        <div class="settings-form-group">
+          <label class="settings-label" for="settingGreetingHi">AI Greeting (Hindi)</label>
+          <div class="settings-desc">What the assistant says immediately when screening the caller.</div>
+          <input type="text" id="settingGreetingHi" class="settings-input"
+            value="नमस्ते! मैं एक AI कॉल असिस्टेंट बोल रहा हूँ। आपका नाम क्या है?">
+        </div>
+
+        <div class="settings-form-group">
+          <label class="settings-label" for="settingStrictness">Screening Strictness</label>
+          <div class="settings-desc">Controls how aggressively suspicious or marketing callers are flagged.</div>
+          <select id="settingStrictness" class="settings-select">
+            <option value="balanced" selected>Balanced (Recommended for everyday personal use)</option>
+            <option value="strict">Strict (Require full identification before proceeding)</option>
+            <option value="relaxed">Relaxed (Accept casual messages with fewer follow-ups)</option>
+          </select>
+        </div>
+
+        <div class="settings-form-group">
+          <label class="settings-label" for="settingRetention">Transcript Retention Period</label>
+          <div class="settings-desc">Automatically purge old call records for privacy.</div>
+          <select id="settingRetention" class="settings-select">
+            <option value="30" selected>30 Days</option>
+            <option value="7">7 Days</option>
+            <option value="90">90 Days</option>
+          </select>
+        </div>
+
+        <div class="settings-form-group">
+          <label class="settings-label">Telephony Provider Status</label>
+          <div class="settings-desc">Currently active provider adapter:</div>
+          <div
+            style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: var(--radius-sm); font-size: 0.85rem; color: #a7f3d0;">
+            🟢 <strong>Simulated Telephony Adapter (Active)</strong><br>
+            Mode: Local Demo (Free) • Cost: ₹0.00 • No external telecom contracts needed.
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+          <button class="btn btn-secondary" id="btnCancelSettings">Cancel</button>
+          <button class="btn btn-primary" id="btnSaveSettings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: REAL CALL SETUP GUIDE ================= -->
+  <div class="modal-overlay" id="guideModalOverlay" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
+    <div class="modal-card" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 id="guideModalTitle">📖 How to Connect Real Incoming Indian Calls</h3>
+        <button class="modal-close-btn" id="btnCloseGuideModal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1;">
+        <h4 style="color: #ffffff; margin-bottom: 6px;">How It Works: Unanswered Call Forwarding</h4>
+        <p style="margin-bottom: 14px;">
+          You do <strong>not</strong> need to transfer your SIM or give callers a new number. You use standard GSM
+          <em>conditional call forwarding</em>. When you are busy, reject a call, or don't answer within 20 seconds,
+          your telecom provider (Jio, Airtel, Vi) forwards the call to the AI Assistant.
+        </p>
+
+        <h4 style="color: #ffffff; margin-bottom: 6px;">Step 1: Get a Virtual Inbound Number</h4>
+        <p style="margin-bottom: 14px;">
+          Use an Indian telephony provider adapter such as <strong>Exotel</strong> or <strong>Twilio India</strong>.
+          They provide an Indian virtual DID number (e.g., <code>+91 80 4712 3456</code>) with webhook capability.
+        </p>
+
+        <h4 style="color: #ffffff; margin-bottom: 6px;">Step 2: Configure Conditional Forwarding on Your Mobile</h4>
+        <div
+          style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; font-family: monospace; margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+          *61*&lt;VirtualNumber&gt;*11*25#
+        </div>
+        <p style="margin-bottom: 14px;">
+          Dial this GSM MMI code on your phone dialer. <code>*61*</code> sets forwarding when unanswered after 25
+          seconds. To cancel anytime, simply dial <code>##61#</code>.
+        </p>
+
+        <h4 style="color: #ffffff; margin-bottom: 6px;">Step 3: Point Webhook to Server</h4>
+        <p style="margin-bottom: 14px;">
+          Set the provider webhook URL to: <code>https://your-domain.com/api/telephony/webhook</code>. The backend will
+          serve Hindi prompts and gather caller speech.
+        </p>
+
+        <h4 style="color: #ffffff; margin-bottom: 6px;">Costs During Development</h4>
+        <p>
+          Currently, the local demo is <strong>100% free</strong> using the built-in
+          <code>SimulatedTelephonyAdapter</code> and local NLP. Only configure real telephony once you are ready for
+          production.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive"></div>
+
+  <!-- JavaScript Application -->
+  <script src="js/app.js"></script>
+</body>
+
+</html>
